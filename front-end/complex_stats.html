@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complex Statistical Analysis</title>
+    <!-- Favicon link -->
+    <link rel="icon" href="https://placehold.co/32x32/000000/FFFFFF?text=CS" type="image/x-icon">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <!-- Overlay and Message Box for custom alerts -->
+    <div class="overlay" id="overlay"></div>
+    <div class="message-box" id="messageBox">
+        <p id="messageText"></p>
+        <button id="messageBoxOkButton">OK</button>
+    </div>
+
+    <!-- Prompt Box for user input -->
+    <div class="message-box hidden" id="promptBox">
+        <p id="promptText"></p>
+        <input type="text" id="promptInput" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        <div class="flex justify-end space-x-2 mt-4">
+            <button id="promptOkBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">OK</button>
+            <button id="promptCancelBtn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="w-full max-w-4xl nav-background p-4 rounded-xl shadow-xl mb-6 flex justify-around items-center">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="reporting.html" class="nav-link">Reporting</a>
+        <a href="time-series.html" class="nav-link">Time Series</a>
+        <a href="complex_stats.html" class="nav-link active">Complex Stats</a>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area w-full max-w-4xl p-8 rounded-xl shadow-2xl">
+        <h1 class="text-3xl font-bold text-center mb-6 section-title">Complex Statistical Analysis</h1>
+
+        <!-- File Status Section -->
+        <div class="mb-8 p-6 rounded-lg shadow-inner content-section-background">
+            <h2 class="section-title mb-4">Data Status</h2>
+            <p id="fileNameDisplay" class="text-center text-gray-700">No file loaded. Please upload a CSV/Excel file on the Home page.</p>
+        </div>
+
+        <!-- Complex Stats Controls Section -->
+        <div id="complexStatsControlsSection" class="mb-8 p-6 rounded-lg shadow-inner content-section-background hidden">
+            <h2 class="section-title mb-4">Analysis Options</h2>
+
+            <!-- Correlation Matrix Section -->
+            <div class="mb-6 p-4 rounded-lg shadow-inner content-section-background">
+                <h3 class="text-xl font-semibold mb-3">Correlation Matrix</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="correlationColumnsSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Numeric Columns (Multi-select):</label>
+                        <select id="correlationColumnsSelect" multiple class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-32"></select>
+                    </div>
+                    <div>
+                        <label for="correlationOrderSelect" class="block text-sm font-medium text-gray-700 mb-1">Order By:</label>
+                        <select id="correlationOrderSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="alphabetical">Alphabetical</option>
+                            <option value="absolute">Absolute Value</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-center mt-4">
+                    <button id="calculateCorrelationBtn" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 ease-in-out">
+                        Calculate Correlation
+                    </button>
+                </div>
+                <div id="correlationMatrixOutput" class="p-4 rounded-lg shadow-inner w-full text-gray-800 content-section-background mt-6 hidden">
+                    <div id="correlationMatrixContainer" class="overflow-x-auto">
+                        <!-- Correlation matrix table will be inserted here -->
+                    </div>
+                    <div class="flex flex-col items-center justify-center space-y-4 mt-6">
+                        <button id="getAICorrelationInterpretationBtn" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 ease-in-out hidden">
+                            Get AI Interpretation ✨
+                        </button>
+                        <div id="correlationInsightsOutput" class="p-4 rounded-lg shadow-inner w-full text-gray-800 content-section-background hidden">
+                            <p id="correlationInsightsText"></p>
+                            <div id="correlationInsightsLoading" class="loading-spinner hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multiple Linear Regression Section -->
+            <div class="mb-6 p-4 rounded-lg shadow-inner content-section-background">
+                <h3 class="text-xl font-semibold mb-3">Multiple Linear Regression (MLR)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="dependentVarSelectMLR" class="block text-sm font-medium text-gray-700 mb-1">Dependent Variable (Y):</label>
+                        <select id="dependentVarSelectMLR" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                    </div>
+                    <div>
+                        <label for="independentVarsSelectMLR" class="block text-sm font-medium text-gray-700 mb-1">Independent Variables (X) - Multi-select:</label>
+                        <select id="independentVarsSelectMLR" multiple class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-32"></select>
+                    </div>
+                </div>
+                <div class="flex justify-center mt-4">
+                    <button id="runRegressionBtn" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 ease-in-out">
+                        Run Linear Regression
+                    </button>
+                </div>
+                <div id="regressionResultsOutput" class="p-4 rounded-lg shadow-inner w-full text-gray-800 content-section-background mt-6 hidden">
+                    <h4 class="text-lg font-semibold mb-2">Regression Results:</h4>
+                    <pre id="regressionResultsText" class="whitespace-pre-wrap text-sm"></pre>
+                    <div class="flex flex-col items-center justify-center space-y-4 mt-6">
+                        <button id="getAILinearRegressionInterpretationBtn" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 ease-in-out hidden">
+                            Get AI Interpretation ✨
+                        </button>
+                        <div id="linearRegressionInsightsOutput" class="p-4 rounded-lg shadow-inner w-full text-gray-800 content-section-background hidden">
+                            <p id="linearRegressionInsightsText"></p>
+                            <div id="linearRegressionInsightsLoading" class="loading-spinner hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Random Forest Regression Section -->
+            <div class="mb-6 p-4 rounded-lg shadow-inner content-section-background">
+                <h3 class="text-xl font-semibold mb-3">Random Forest Regression</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="dependentVarSelectRF" class="block text-sm font-medium text-gray-700 mb-1">Dependent Variable (Y):</label>
+                        <select id="dependentVarSelectRF" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                    </div>
+                    <div>
+                        <label for="independentVarsSelectRF" class="block text-sm font-medium text-gray-700 mb-1">Independent Variables (X) - Multi-select:</label>
+                        <select id="independentVarsSelectRF" multiple class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-32"></select>
+                    </div>
+                    <div>
+                        <label for="numEstimatorsRF" class="block text-sm font-medium text-gray-700 mb-1">Number of Estimators:</label>
+                        <input type="number" id="numEstimatorsRF" value="100" min="10" step="10" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    </div>
+                </div>
+                <div class="flex justify-center mt-4">
+                    <button id="runRandomForestBtn" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 ease-in-out">
+                        Run Random Forest
+                    </button>
+                </div>
+                <div id="randomForestResultsOutput" class="p-4 rounded-lg shadow-inner w-full text-gray-800 content-section-background mt-6 hidden">
+                    <h4 class="text-lg font-semibold mb-2">Random Forest Results:</h4>
+                    <pre id="randomForestResultsText" class="whitespace-pre-wrap text-sm"></pre>
+                    <h4 class="text-lg font-semibold mb-2 mt-4">Feature Importance:</h4>
+                    <pre id="featureImportanceText" class="whitespace-pre-wrap text-sm"></pre>
+                    <div class="flex flex-col items-center justify-center space-y-4 mt-6">
+                        <button id="getAIRandomForestInterpretationBtn" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 ease-in-out hidden">
+                            Get AI Interpretation ✨
+                        </button>
+                        <div id="randomForestInsightsOutput" class="p-4 rounded-lg shadow-inner w-full text-gray-800 content-section-background hidden">
+                            <p id="randomForestInsightsText"></p>
+                            <div id="randomForestInsightsLoading" class="loading-spinner hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-gray-600 text-center mt-8 text-sm">
+            Upload a CSV/Excel file to begin your data analysis. Your data will be saved
+            offline in your browser's IndexedDB for a seamless experience.
+        </p>
+    </div>
+
+    <!-- Link to external JS files (Order matters due to dependencies) -->
+    <script type="module" src="ui-components.js"></script>
+    <script type="module" src="data-handlers.js"></script>
+    <script type="module" src="charting.js"></script>
+    <script type="module" src="complex_stats.js"></script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Python virtual environment
+venv/
+
+# Assuming 'proxy_helper' is the name of the large folder
+proxy_helper/
+
+# --- Add other common ignores if they are not already there ---
+# Node.js dependencies
+node_modules/
+
+# Front-end build output (typically 'build' or 'dist' inside 'front-end/')
+front-end/build/
+front-end/dist/
+
+# Environment variables
+.env
+
+# Vercel related files/cache (usually safe to ignore)
+.vercel/
+
+# macOS generated files
+.DS_Store
+
+# Windows generated files
+Thumbs.db
+
+# Logs
+*.log

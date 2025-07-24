@@ -1,0 +1,224 @@
+/* Universal Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    /* Universal background: seamless blend of black, brown, and white */
+    background: linear-gradient(to right, #a08e8e 0%, #b5b8d2 50%, #708f71 100%);
+    color: #06c8fe; /* Default text color for body */
+    margin: 0;
+    padding: 0;
+}
+
+/* Header, Nav Bar, and Main Content Area Background */
+/* Smooth gradient transparent grey */
+.nav-background,
+.main-content-area,
+.content-section-background {
+    background: rgba(128, 128, 128, 0.1); /* Slightly transparent grey */
+    backdrop-filter: blur(5px); /* Optional: adds a subtle blur effect */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Light border for definition */
+}
+
+/* Titles and Subtitles Styling */
+h1, h2, h3, .section-title {
+    font-weight: 700; /* Bold text */
+    /* Colors appropriate to the background - using a dark gray that stands out on the transparent grey */
+    color: #06f7f7; /* A vibrant cyan that stands out */
+}
+
+/* Navigation Links */
+.nav-link {
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem; /* Rounded corners */
+    text-decoration: none;
+    font-weight: 600;
+    color: #06c8fe; /* Light blue for links */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Slightly lighter on hover */
+    color: #00e6e6; /* Brighter blue on hover */
+}
+
+.nav-link.active {
+    background-color: #4f46e5; /* Indigo-600 for active link */
+    color: #ffffff; /* White text for active link */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for active link */
+}
+
+/* Input and Select elements */
+input[type="file"],
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border: 1px solid #d1d5db; /* Light gray border */
+    color: #1f2937; /* Dark text for readability */
+    border-radius: 0.375rem; /* Rounded corners */
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease-in-out;
+}
+
+input[type="file"]:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus {
+    border-color: #4f46e5; /* Indigo-600 on focus */
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); /* Ring effect on focus */
+    outline: none;
+}
+
+select[multiple] {
+    height: auto; /* Allow multiple select to expand */
+    min-height: 8rem; /* Minimum height for multi-selects */
+}
+
+/* Button Styles */
+button {
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    border-radius: 0.5rem; /* Consistent rounded corners */
+    font-weight: 600;
+    padding: 0.75rem 1.5rem; /* Generous padding */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Specific button colors are handled by Tailwind classes in HTML */
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem; /* Rounded corners for the table */
+    overflow: hidden; /* Ensures rounded corners apply to content */
+}
+
+th {
+    padding: 12px 24px;
+    background-color: #e0e7ff; /* Light indigo background for headers */
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4338ca; /* Darker indigo */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+td {
+    padding: 10px 24px;
+    font-size: 0.875rem;
+    color: #374151; /* Dark gray */
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f9fafb; /* Lighter gray for even rows */
+}
+
+tbody tr:hover {
+    background-color: #eff6ff; /* Lightest blue on hover */
+}
+
+/* Correlation Matrix specific styles */
+#correlationMatrixContainer table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+}
+
+#correlationMatrixContainer th,
+#correlationMatrixContainer td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+#correlationMatrixContainer th {
+    background-color: #f2f2f2;
+}
+
+/* Message Box and Overlay */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); /* Made darker for better visibility */
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.message-box {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 0.75rem; /* More rounded */
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    position: fixed; /* Keep it fixed even when scrolling */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center horizontally and vertically */
+    display: flex; /* Use flexbox for internal layout */
+    flex-direction: column;
+    gap: 1rem; /* Space between elements */
+    color: #1f2937; /* Dark text for message box */
+}
+
+.message-box p {
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+.message-box button {
+    background-color: #4f46e5; /* Indigo-600 */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.message-box button:hover {
+    background-color: #4338ca; /* Darker indigo */
+}
+
+.message-box.hidden {
+    display: none;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    border: 4px solid #f3f3f3; /* Light grey */
+    border-top: 4px solid #4f46e5; /* Blue */
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin: 1rem auto; /* Center the spinner */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Utility for hiding elements */
+.hidden {
+    display: none;
+}
