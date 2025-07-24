@@ -23,8 +23,12 @@ import {
 // Import dataReadyPromise from main.js
 import { dataReadyPromise, handleFileUpload } from './main.js'; // Import handleFileUpload from main.js
 
-// --- IMPORTANT: Define your deployed backend proxy server URL here ---
-const PROXY_SERVER_URL = 'https://reporting0and0analytics.vercel.app';
+// --- IMPORTANT: Define your deployed backend URL here ---
+// This URL points to your Flask backend deployed on Render.
+// It should be sourced from Vercel environment variables for production.
+// Use 'import.meta.env.VITE_API_BASE_URL' for Vite, 'process.env.NEXT_PUBLIC_API_URL' for Next.js, etc.
+// The fallback 'http://localhost:5000' is for local development with your Flask app.
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; // Replace VITE_API_BASE_URL if using a different framework
 
 
 // --- DOM Elements specific to home.html ---
@@ -447,4 +451,3 @@ async function handleGetInsights() {
 
 // Attach the initialization function to the DOMContentLoaded event
 window.addEventListener('DOMContentLoaded', initializeHomePage);
-

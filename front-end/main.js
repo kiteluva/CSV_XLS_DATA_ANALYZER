@@ -28,9 +28,13 @@ import {
 
 import { showMessageBox, hideMessageBox, showPromptBox } from './ui-components.js';
 
-// --- IMPORTANT: Define your deployed backend proxy server URL here ---
-// Using the stable root domain provided by Vercel for your project.
-const PROXY_SERVER_URL = 'https://reporting0and0analytics.vercel.app';
+// --- IMPORTANT: Define your deployed backend URL here ---
+// This URL points to your Flask backend deployed on Render.
+// It should be sourced from Vercel environment variables for production.
+// Use 'import.meta.env.VITE_API_BASE_URL' for Vite, 'process.env.NEXT_PUBLIC_API_URL' for Next.js, etc.
+// The fallback 'http://localhost:5000' is for local development with your Flask app.
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; // Replace VITE_API_BASE_URL if using a different framework
+
 
 // --- DOM Elements (Universal / Main App) ---
 // These elements might be present on multiple pages or are globally managed.
@@ -298,4 +302,3 @@ function handleExportGraph() {
 
 // Ensure UI initializes on page load
 window.addEventListener('DOMContentLoaded', initializeApp);
-

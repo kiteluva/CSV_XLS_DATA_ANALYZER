@@ -6,8 +6,13 @@ import { showMessageBox, showPromptBox } from './ui-components.js';
 import { parsedData, headers, saveSavedChart, loadSavedCharts, deleteSavedChartById } from './data-handlers.js';
 import { dataReadyPromise } from './main.js';
 
-// --- IMPORTANT: Define your deployed backend proxy server URL here ---\
-const PROXY_SERVER_URL = 'https://reporting0and0analytics.vercel.app';
+// --- IMPORTANT: Define your deployed backend URL here ---
+// This URL points to your Flask backend deployed on Render.
+// It should be sourced from Vercel environment variables for production.
+// Use 'import.meta.env.VITE_API_BASE_URL' for Vite, 'process.env.NEXT_PUBLIC_API_URL' for Next.js, etc.
+// The fallback 'http://localhost:5000' is for local development with your Flask app.
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; // Replace VITE_API_BASE_URL if using a different framework
+
 
 // --- DOM Elements specific to time-series.html ---
 const startDateInput = document.getElementById('startDateInput');
@@ -376,6 +381,15 @@ function handlePlotGraph() {
         return;
     }
 
+    // For scatter plot, ensure both X and Y are numeric
+    if (chartType === 'scatter') {
+        const isXAxisNumeric = parsedData.some(row => typeof row[xAxisCol] === 'number' && !isNaN(row[xAxisCol]));
+        if (!isXAxisNumeric || !isYAxisNumeric) {
+            showMessageBox("For a Scatter Plot, both X-axis and Y-axis columns must be numeric.");
+            return;
+        }
+    }
+
     // Hide viewed saved graph section if a new chart is plotted
     if (viewedSavedGraphSection) viewedSavedGraphSection.classList.add('hidden');
 
@@ -459,8 +473,11 @@ async function handleRunPrediction() {
             value_column: predictionColumn
         };
 
-        const apiKey = ""; // Canvas will provide this at runtime
-        const apiUrl = `${PROXY_SERVER_URL}/time-series-predict?key=${apiKey}`;
+        // --- OLD: Direct call to proxy with API key ---
+        // const apiKey = ""; // Canvas will provide this at runtime
+        // const apiUrl = `${PROXY_SERVER_URL}/time-series-predict?key=${apiKey}`;
+        // --- NEW: Call to Render Flask backend ---
+        const apiUrl = `${BACKEND_URL}/api/time-series-predict`; // Point to your new Flask endpoint
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -470,7 +487,7 @@ async function handleRunPrediction() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
+            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
         }
 
         const result = await response.json();
