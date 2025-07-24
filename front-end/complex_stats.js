@@ -8,11 +8,12 @@ import { showMessageBox as showUIMessageBox } from './ui-components.js'; // Alia
 import { dataReadyPromise } from './main.js'; // Import dataReadyPromise
 
 // --- IMPORTANT: Define your deployed backend URL here ---
-// This URL points to your Flask backend deployed on Render.
-// It should be sourced from Vercel environment variables for production.
-// Use 'import.meta.env.VITE_API_BASE_URL' for Vite, 'process.env.NEXT_PUBLIC_API_URL' for Next.js, etc.
-// The fallback 'http://localhost:5000' is for local development with your Flask app.
-const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; // Replace VITE_API_BASE_URL if using a different framework
+// This URL dynamically points to your Flask backend deployed on Render.
+// It checks if the frontend is running locally (e.g., 'localhost') or is deployed.
+// For deployed environments, it points directly to your Render backend URL.
+const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000' // Use this if your Flask backend is running locally
+    : 'https://csv-xls-data-analyzer.onrender.com'; // Your deployed Render backend URL
 
 
 // --- DOM Elements specific to complex_stats.html ---
@@ -220,11 +221,8 @@ async function performMultipleLinearRegression(data, dependentVar, independentVa
             independent_variables: independentVars
         };
 
-        // --- OLD: Direct call to Vercel proxy for Python backend ---
-        // const apiKey = ""; // Canvas will provide this at runtime
-        // const apiUrl = `${PROXY_SERVER_URL}/linear-regression?key=${apiKey}`;
         // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/linear-regression`; // Assuming you create this endpoint in Flask
+        const apiUrl = `${BACKEND_URL}/api/linear-regression`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -234,7 +232,7 @@ async function performMultipleLinearRegression(data, dependentVar, independentVa
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
+            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
         }
 
         const result = await response.json();
@@ -313,11 +311,8 @@ async function performRandomForestRegression(data, dependentVar, independentVars
             n_estimators: numEstimators
         };
 
-        // --- OLD: Direct call to Vercel proxy for Python backend ---
-        // const apiKey = ""; // Canvas will provide this at runtime
-        // const apiUrl = `${PROXY_SERVER_URL}/random-forest-regression?key=${apiKey}`;
         // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/random-forest-regression`; // Assuming you create this endpoint in Flask
+        const apiUrl = `${BACKEND_URL}/api/random-forest-regression`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -327,7 +322,7 @@ async function performRandomForestRegression(data, dependentVar, independentVars
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
+            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
         }
 
         const result = await response.json();
@@ -607,11 +602,8 @@ async function handleGetAICorrelationInterpretation() {
             }
         };
 
-        // --- OLD: Direct call to proxy with API key ---
-        // const apiKey = ""; // Canvas will provide this at runtime
-        // const apiUrl = `${PROXY_SERVER_URL}/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`; // Using the generic insights endpoint
+        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -628,6 +620,10 @@ async function handleGetAICorrelationInterpretation() {
         // Expecting { insights: "..." } from the Flask backend
         if (result.insights) {
             correlationInsightsText.textContent = result.insights;
+        } else if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+            correlationInsightsText.textContent = result.candidates[0].content.parts[0].text;
         } else {
             correlationInsightsText.textContent = "No insights could be generated by the backend for this correlation matrix.";
             console.warn("Unexpected backend API response structure:", result);
@@ -667,11 +663,8 @@ async function handleGetAILinearRegressionInterpretation() {
             }
         };
 
-        // --- OLD: Direct call to proxy with API key ---
-        // const apiKey = ""; // Canvas will provide this at runtime
-        // const apiUrl = `${PROXY_SERVER_URL}/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`; // Using the generic insights endpoint
+        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -688,6 +681,10 @@ async function handleGetAILinearRegressionInterpretation() {
         // Expecting { insights: "..." } from the Flask backend
         if (result.insights) {
             linearRegressionInsightsText.textContent = result.insights;
+        } else if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+            linearRegressionInsightsText.textContent = result.candidates[0].content.parts[0].text;
         } else {
             linearRegressionInsightsText.textContent = "No insights could be generated by the backend for these linear regression results.";
             console.warn("Unexpected backend API response structure:", result);
@@ -728,11 +725,8 @@ async function handleGetAIRandomForestInterpretation() {
             }
         };
 
-        // --- OLD: Direct call to proxy with API key ---
-        // const apiKey = ""; // Canvas will provide this at runtime
-        // const apiUrl = `${PROXY_SERVER_URL}/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`; // Using the generic insights endpoint
+        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -749,6 +743,10 @@ async function handleGetAIRandomForestInterpretation() {
         // Expecting { insights: "..." } from the Flask backend
         if (result.insights) {
             randomForestInsightsText.textContent = result.insights;
+        } else if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+            randomForestInsightsText.textContent = result.candidates[0].content.parts[0].text;
         } else {
             randomForestInsightsText.textContent = "No insights could be generated by the backend for these Random Forest results.";
             console.warn("Unexpected backend API response structure:", result);

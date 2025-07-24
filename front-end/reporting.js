@@ -7,11 +7,12 @@ import { parsedData, headers, deleteSavedChartById } from './data-handlers.js';
 import { dataReadyPromise } from './main.js';
 
 // --- IMPORTANT: Define your deployed backend URL here ---
-// This URL points to your Flask backend deployed on Render.
-// It should be sourced from Vercel environment variables for production.
-// Use 'import.meta.env.VITE_API_BASE_URL' for Vite, 'process.env.NEXT_PUBLIC_API_URL' for Next.js, etc.
-// The fallback 'http://localhost:5000' is for local development with your Flask app.
-const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; // Replace VITE_API_BASE_URL if using a different framework
+// This URL dynamically points to your Flask backend deployed on Render.
+// It checks if the frontend is running locally (e.g., 'localhost') or is deployed.
+// For deployed environments, it points directly to your Render backend URL.
+const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000' // Use this if your Flask backend is running locally
+    : 'https://csv-xls-data-analyzer.onrender.com'; // Your deployed Render backend URL
 
 
 // --- DOM Elements specific to reporting.html ---
@@ -566,9 +567,6 @@ async function handleGetAIReportInsights() {
             }
         };
 
-        // --- OLD: Direct call to proxy with API key ---
-        // const apiKey = ""; // Canvas will provide this at runtime
-        // const apiUrl = `${PROXY_SERVER_URL}/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         // --- NEW: Call to Render Flask backend ---
         const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`; // Using the generic insights endpoint
 
@@ -585,7 +583,9 @@ async function handleGetAIReportInsights() {
 
         const result = await response.json();
         // Expecting { insights: "..." } from the Flask backend
-        if (result.candidates && result.candidates.length > 0 &&
+        if (result.insights) {
+            reportInsightsText.textContent = result.insights;
+        } else if (result.candidates && result.candidates.length > 0 &&
             result.candidates[0].content && result.candidates[0].content.parts &&
             result.candidates[0].content.parts.length > 0) {
             reportInsightsText.textContent = result.candidates[0].content.parts[0].text;
