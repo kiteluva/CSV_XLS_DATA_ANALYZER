@@ -467,11 +467,11 @@ async function handleRunPrediction() {
 
     try {
         const payload = {
-            dataframe: seriesData, // Backend expects 'dataframe'
-            date_column: 'date',  // Hardcoded as 'date' since we preprocess
-            value_column: 'value',// Hardcoded as 'value' since we preprocess
+            // Corrected: Backend expects 'time_series_data' not 'dataframe'
+            time_series_data: seriesData,
             prediction_horizon: predictionHorizon,
             model_type: predictionModel
+            // date_column and value_column are inferred by backend from 'time_series_data' structure
         };
 
         // --- Call to Render Flask backend ---
