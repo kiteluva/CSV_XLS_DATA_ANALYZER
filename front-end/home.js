@@ -419,8 +419,8 @@ async function handleGetInsights() {
             }
         };
 
-        // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`; // Using the generic insights endpoint
+        // --- Corrected Call to Render Flask backend proxy ---
+        const apiUrl = `${BACKEND_URL}/generate_ai_insights`; // Using the generic insights endpoint
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -434,7 +434,7 @@ async function handleGetInsights() {
         }
 
         const result = await response.json();
-        // Expecting { insights: "..." } from the Flask backend
+        // Expecting { insights: "..." } from the Flask backend proxy
         if (result.insights) {
             insightsText.textContent = result.insights;
         } else if (result.candidates && result.candidates.length > 0 &&

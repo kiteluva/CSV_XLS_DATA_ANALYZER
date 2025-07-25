@@ -467,15 +467,15 @@ async function handleRunPrediction() {
 
     try {
         const payload = {
-            time_series_data: seriesData,
+            dataframe: seriesData, // Backend expects 'dataframe'
+            date_column: 'date',  // Hardcoded as 'date' since we preprocess
+            value_column: 'value',// Hardcoded as 'value' since we preprocess
             prediction_horizon: predictionHorizon,
-            model_type: predictionModel,
-            date_column: dateColumn,
-            value_column: predictionColumn
+            model_type: predictionModel
         };
 
-        // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/time-series-predict`; // Point to your new Flask endpoint
+        // --- Call to Render Flask backend ---
+        const apiUrl = `${BACKEND_URL}/time_series_predict`; // Point to your Flask endpoint
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -485,7 +485,7 @@ async function handleRunPrediction() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
+            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.error || JSON.stringify(errorData)}`);
         }
 
         const result = await response.json();

@@ -216,13 +216,13 @@ async function performMultipleLinearRegression(data, dependentVar, independentVa
 
     try {
         const payload = {
-            data: regressionData,
-            dependent_variable: dependentVar,
-            independent_variables: independentVars
+            dataframe: regressionData, // Pass as 'dataframe' for consistency with Flask
+            dependent_var: dependentVar,
+            independent_vars: independentVars
         };
 
-        // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/linear-regression`;
+        // --- Call to Render Flask backend ---
+        const apiUrl = `${BACKEND_URL}/run_linear_regression`; // Correct endpoint for Flask
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -232,7 +232,7 @@ async function performMultipleLinearRegression(data, dependentVar, independentVa
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
+            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.error || JSON.stringify(errorData)}`);
         }
 
         const result = await response.json();
@@ -245,10 +245,22 @@ async function performMultipleLinearRegression(data, dependentVar, independentVa
         resultsString += `F-statistic: ${result.f_statistic.toFixed(2)} (p-value: ${result.f_p_value.toExponential(2)})\n\n`;
 
         resultsString += `Coefficients:\n`;
-        for (const [key, value] of Object.entries(result.coefficients)) {
-            resultsString += `  ${key}: ${value.toFixed(4)}\n`;
+        // Assuming coefficients come back as an object with variable names as keys
+        if (result.coefficients) {
+            for (const [key, value] of Object.entries(result.coefficients)) {
+                resultsString += `  ${key}: ${value.toFixed(4)}\n`;
+            }
+        } else if (result.parameters) { // If backend returns 'parameters' as array
+             result.parameters.forEach(param => {
+                 resultsString += `  ${param.Variable}: ${param.Coefficient.toFixed(4)}\n`;
+             });
         }
-        resultsString += `\nIntercept: ${result.intercept.toFixed(4)}\n`;
+        
+        // The intercept might be a separate field or part of coefficients
+        // if (result.intercept) {
+        //     resultsString += `\nIntercept: ${result.intercept.toFixed(4)}\n`;
+        // }
+
 
         regressionResultsText.textContent = resultsString;
         getAILinearRegressionInterpretationBtn.classList.remove('hidden');
@@ -305,14 +317,14 @@ async function performRandomForestRegression(data, dependentVar, independentVars
 
     try {
         const payload = {
-            data: rfData,
-            dependent_variable: dependentVar,
-            independent_variables: independentVars,
+            dataframe: rfData, // Pass as 'dataframe' for consistency with Flask
+            dependent_var: dependentVar,
+            independent_vars: independentVars,
             n_estimators: numEstimators
         };
 
-        // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/random-forest-regression`;
+        // --- Call to Render Flask backend ---
+        const apiUrl = `${BACKEND_URL}/run_random_forest`; // Correct endpoint for Flask
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -322,13 +334,13 @@ async function performRandomForestRegression(data, dependentVar, independentVars
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
+            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.error || JSON.stringify(errorData)}`);
         }
 
         const result = await response.json();
         console.log("Random Forest Results:", result);
 
-        randomForestResultsText.textContent = `R-squared: ${result.r_squared.toFixed(4)}\n`;
+        randomForestResultsText.textContent = `R-squared: ${result.r_squared.toFixed(4)}\n`; // Use result.r_squared as per backend
         randomForestResultsText.textContent += `Mean Absolute Error (MAE): ${result.mae.toFixed(4)}\n`;
         randomForestResultsText.textContent += `Mean Squared Error (MSE): ${result.mse.toFixed(4)}\n`;
         randomForestResultsText.textContent += `Root Mean Squared Error (RMSE): ${result.rmse.toFixed(4)}\n`;
@@ -602,8 +614,8 @@ async function handleGetAICorrelationInterpretation() {
             }
         };
 
-        // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`;
+        // --- Corrected Call to Render Flask backend proxy ---
+        const apiUrl = `${BACKEND_URL}/generate_ai_insights`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -617,7 +629,7 @@ async function handleGetAICorrelationInterpretation() {
         }
 
         const result = await response.json();
-        // Expecting { insights: "..." } from the Flask backend
+        // Expecting { insights: "..." } from the Flask backend proxy
         if (result.insights) {
             correlationInsightsText.textContent = result.insights;
         } else if (result.candidates && result.candidates.length > 0 &&
@@ -663,8 +675,8 @@ async function handleGetAILinearRegressionInterpretation() {
             }
         };
 
-        // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`;
+        // --- Corrected Call to Render Flask backend proxy ---
+        const apiUrl = `${BACKEND_URL}/generate_ai_insights`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -678,7 +690,7 @@ async function handleGetAILinearRegressionInterpretation() {
         }
 
         const result = await response.json();
-        // Expecting { insights: "..." } from the Flask backend
+        // Expecting { insights: "..." } from the Flask backend proxy
         if (result.insights) {
             linearRegressionInsightsText.textContent = result.insights;
         } else if (result.candidates && result.candidates.length > 0 &&
@@ -725,8 +737,8 @@ async function handleGetAIRandomForestInterpretation() {
             }
         };
 
-        // --- NEW: Call to Render Flask backend ---
-        const apiUrl = `${BACKEND_URL}/api/generate-ai-insights`;
+        // --- Corrected Call to Render Flask backend proxy ---
+        const apiUrl = `${BACKEND_URL}/generate_ai_insights`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -740,7 +752,7 @@ async function handleGetAIRandomForestInterpretation() {
         }
 
         const result = await response.json();
-        // Expecting { insights: "..." } from the Flask backend
+        // Expecting { insights: "..." } from the Flask backend proxy
         if (result.insights) {
             randomForestInsightsText.textContent = result.insights;
         } else if (result.candidates && result.candidates.length > 0 &&
