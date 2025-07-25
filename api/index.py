@@ -98,6 +98,8 @@ def run_linear_regression():
             "r_squared": model.rsquared,
             "adj_r_squared": adj_r_squared,
             "rmse": rmse,
+            "f_statistic": model.fvalue,  # Added: F-statistic
+            "f_p_value": model.f_pvalue,  # Added: F-pvalue
             "insights": insights
         })
     except Exception as e:
@@ -108,24 +110,44 @@ def run_linear_regression():
 def run_random_forest():
     data = request.get_json()
     if not data or 'dataframe' not in data or 'dependent_var' not in data or 'independent_vars' not in data:
+        app.logger.warning("Missing required parameters for Random Forest, returning 400.")
         return jsonify({"error": "Missing required data for Random Forest"}), 400
+    
     try:
         df = pd.DataFrame(data['dataframe'])
         dependent_var = data['dependent_var']
         independent_vars = data['independent_vars']
         n_estimators = data.get('n_estimators', 100) # Default to 100 if not provided
 
-        for col in [dependent_var] + independent_vars:
+        # Ensure all required columns exist in the DataFrame
+        all_cols = [dependent_var] + independent_vars
+        if not all(col in df.columns for col in all_cols):
+            missing_cols = [col for col in all_cols if col not in df.columns]
+            app.logger.error(f"Missing columns in dataframe for Random Forest: {missing_cols}")
+            return jsonify({"error": f"DataFrame missing required columns: {', '.join(missing_cols)}"}), 400
+
+        for col in all_cols:
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
-        df_cleaned = df[[dependent_var] + independent_vars].dropna()
+        df_cleaned = df[all_cols].dropna()
 
         if df_cleaned.empty:
-            return jsonify({"error": "No valid data after cleaning for Random Forest"}), 400
+            app.logger.warning("No valid data after cleaning for Random Forest, returning 400.")
+            return jsonify({"error": "No valid numeric data after cleaning. Ensure columns are numeric and have no missing values."}), 400
 
         X = df_cleaned[independent_vars]
         y = df_cleaned[dependent_var]
 
+        # Check if X is empty after dropping NaNs
+        if X.empty or y.empty:
+            app.logger.warning("Empty X or y after data cleaning for Random Forest, returning 400.")
+            return jsonify({"error": "Not enough valid data points for Random Forest Regression after cleaning. Ensure selected columns contain sufficient numeric data."}), 400
+        
+        # Check if there are enough samples for scikit-learn
+        if len(X) < 2: # RandomForestRegressor typically needs at least 2 samples
+            app.logger.warning(f"Not enough samples ({len(X)}) for Random Forest, returning 400.")
+            return jsonify({"error": "Not enough samples to train Random Forest Regression (need at least 2 valid data rows)."}), 400
+        
         rf_model = RandomForestRegressor(n_estimators=n_estimators, random_state=42)
         rf_model.fit(X, y)
         y_pred = rf_model.predict(X)
@@ -153,8 +175,10 @@ def run_random_forest():
             "insights": insights
         })
     except Exception as e:
-        app.logger.error(f"Error in run_random_forest: {e}", exc_info=True)
-        return jsonify({"error": f"Random Forest Regression failed: {str(e)}"}), 500
+        # Catch more general exceptions and log them
+        app.logger.error(f"Unhandled error in run_random_forest: {e}", exc_info=True)
+        # Return a generic 500 error, ensuring CORS headers are added
+        return jsonify({"error": f"An internal server error occurred during Random Forest Regression: {str(e)}"}), 500
 
 @app.route('/time_series_predict', methods=['POST'])
 def time_series_predict():
@@ -191,32 +215,25 @@ def time_series_predict():
             model = pm.auto_arima(series, seasonal=False, suppress_warnings=True,
                                   stepwise=True, trace=False, error_action='ignore')
             model_fit = model # pmdarima auto_arima returns the fitted model directly
-        elif model_type == 'simple_linear_regression':
-            # Create a numerical representation of time
-            X_lr = np.arange(len(series)).reshape(-1, 1)
-            lr_model = LinearRegression()
-            lr_model.fit(X_lr, series)
-            model_fit = lr_model
-        else:
-            return jsonify({"error": "Invalid model_type specified. Choose 'arima' or 'simple_linear_regression'"}), 400
+        elif model_type == 'arma': # New: Explicit ARMA model type
+            # Force d=0 for ARMA, still using auto_arima to find best p,q
+            model = pm.auto_arima(series, seasonal=False, suppress_warnings=True,
+                                  stepwise=True, trace=False, error_action='ignore',
+                                  d=0) # Force no differencing for ARMA
+            model_fit = model
+        else: # Removed simple_linear_regression
+            return jsonify({"error": "Invalid model_type specified. Choose 'arima' or 'arma'"}), 400 # Updated message
 
         forecast = pd.Series() # Initialize empty series for forecast
 
-        if model_type == 'arima':
+        if model_type == 'arima' or model_type == 'arma': # Both use pmdarima predict
             forecast_results = model_fit.predict(n_periods=prediction_horizon)
             last_date = series.index[-1]
             # Infer frequency from historical series for future dates, or default to daily
             freq = pd.infer_freq(series.index) if pd.infer_freq(series.index) else 'D'
             future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=prediction_horizon, freq=freq)
             forecast = pd.Series(forecast_results, index=future_dates)
-        elif model_type == 'simple_linear_regression':
-            # Predict future values based on linear trend
-            future_indices = np.arange(len(series), len(series) + prediction_horizon).reshape(-1, 1)
-            future_predictions = model_fit.predict(future_indices)
-            last_date = series.index[-1]
-            freq = pd.infer_freq(series.index) if pd.infer_freq(series.index) else 'D'
-            future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=prediction_horizon, freq=freq)
-            forecast = pd.Series(future_predictions, index=future_dates)
+        # Removed simple_linear_regression prediction block
 
         predictions = []
         for date, value in forecast.items():
@@ -224,11 +241,9 @@ def time_series_predict():
 
         # Calculate RMSE on historical data (in-sample prediction)
         rmse = None
-        if model_type == 'arima' and len(series) > 1:
-            historical_predictions = model_fit.predict(n_periods=len(series))
-            rmse = np.sqrt(mean_squared_error(series, historical_predictions))
-        elif model_type == 'simple_linear_regression' and len(series) > 1:
-            historical_predictions = model_fit.predict(X_lr) # Use X_lr for historical prediction
+        if model_type == 'arima' or model_type == 'arma':
+            # Use the fitted pmdarima model to predict historical data
+            historical_predictions = model_fit.predict(n_periods=len(series), return_X_y=True)[1] # Get y_pred
             rmse = np.sqrt(mean_squared_error(series, historical_predictions))
 
         insights = "Time series prediction completed. "

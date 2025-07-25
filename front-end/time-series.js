@@ -409,7 +409,7 @@ async function handleRunPrediction() {
 
     const dateColumn = dateColumnSelect.value;
     const predictionColumn = predictionColumnSelect.value;
-    const predictionModel = predictionModelSelect.value;
+    const predictionModel = predictionModelSelect.value; // This value needs to be "arima" or "arma"
     const predictionHorizon = parseInt(predictionHorizonInput.value, 10);
     const filterColumn = predictionFilterColumnSelect.value;
     const filterValue = predictionFilterValueSelect.value;
@@ -467,15 +467,16 @@ async function handleRunPrediction() {
 
     try {
         const payload = {
-            // Corrected: Backend expects 'time_series_data' not 'dataframe'
-            time_series_data: seriesData,
+            time_series_data: seriesData, 
             prediction_horizon: predictionHorizon,
-            model_type: predictionModel
-            // date_column and value_column are inferred by backend from 'time_series_data' structure
+            model_type: predictionModel.toLowerCase() // Ensure model_type is lowercase
         };
 
-        // --- Call to Render Flask backend ---
+        // --- NEW: Call to Render Flask backend ---
         const apiUrl = `${BACKEND_URL}/time_series_predict`; // Point to your Flask endpoint
+
+        console.log("Time Series Prediction Payload being sent:", JSON.stringify(payload, null, 2));
+
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -485,7 +486,7 @@ async function handleRunPrediction() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.error || JSON.stringify(errorData)}`);
+            throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorData.detail || errorData.message || errorData.error || JSON.stringify(errorData)}`);
         }
 
         const result = await response.json();
