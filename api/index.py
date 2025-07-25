@@ -13,7 +13,10 @@ import requests
 import time # Added for exponential backoff
 
 app = Flask(__name__)
-CORS(app) # This allows all origins by default, suitable for your Vercel frontend
+# IMPORTANT: This allows all origins by default. If you prefer to restrict
+# it to only your Vercel frontend, change to:
+# CORS(app, origins=["https://cvs-xlsanalyzer-kiteluva-kiteluvas-projects.vercel.app"])
+CORS(app)
 
 # Helper function for date parsing (consistent with JS)
 def parse_date_value(date_val):
