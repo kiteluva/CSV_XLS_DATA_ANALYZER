@@ -9,14 +9,21 @@ import statsmodels.api as sm
 from statsmodels.tsa.arima.model import ARIMA
 import pmdarima as pm
 import os
-import requests
-import time # Added for exponential backoff
+import requests # Keep this, as Flask will call Gemini directly
+import time # Keep this for exponential backoff in Gemini calls
 
 app = Flask(__name__)
-# IMPORTANT: This allows all origins by default. If you prefer to restrict
-# it to only your Vercel frontend, change to:
-CORS(app, origins=["https://cvs-xlsanalyzer-kiteluva-kiteluvas-projects.vercel.app"])
-#CORS(app)
+
+# --- CRITICAL CORRECTION HERE ---
+# The origin must precisely match your Vercel frontend's URL.
+# From your error message: 'https://csv-xlsdata-analyzer.vercel.app'
+# Make sure this URL is exactly correct.
+CORS(app, origins=["https://csv-xlsdata-analyzer.vercel.app"])
+
+# If, for some reason, the exact URL gives issues, or you have multiple Vercel deployments,
+# you *could* temporarily use CORS(app) to allow all origins during debugging,
+# but restrict it to specific origins in production for better security.
+# CORS(app) # Less secure for production, but good for quick testing if the exact URL doesn't work.
 
 # Helper function for date parsing (consistent with JS)
 def parse_date_value(date_val):
@@ -264,7 +271,7 @@ def time_series_predict():
         app.logger.error(f"Error in time_series_predict: {e}", exc_info=True)
         return jsonify({"error": f"An error occurred during time series prediction: {str(e)}"}), 500
 
-# NEW: AI Insights Proxy Endpoint
+# Keep this AI Insights Proxy Endpoint in Flask, as per your request
 @app.route('/generate_ai_insights', methods=['POST'])
 def generate_ai_insights():
     """
@@ -295,7 +302,6 @@ def generate_ai_insights():
         headers = {'Content-Type': 'application/json'}
 
         # Make the request to the Gemini API with exponential backoff
-        # Implementing basic exponential backoff for robustness
         retries = 3
         delay = 1 # seconds
         for i in range(retries):
